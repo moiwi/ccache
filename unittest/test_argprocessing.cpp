@@ -40,8 +40,21 @@ get_root()
   return "/";
 #else
   char volume[4]; // "C:\"
-  GetVolumePathName(Util::get_actual_cwd().c_str(), volume, sizeof(volume));
-  volume[2] = '/'; // Since base directory is normalized to forward slashes
+  std::string cwd = Util::get_actual_cwd();
+  BOOL ret = GetVolumePathName(cwd.c_str(), volume, sizeof(volume));
+  if (ret != 0) {
+    volume[2] = '/'; // Since base directory is normalized to forward slashes
+  } else {
+    if (cwd[1] == ':') {
+      volume[0] = cwd[0];
+      volume[1] = ':';
+      volume[2] = '/'; // Since base directory is normalized to forward slashes
+      volume[3] = '\0';
+    } else {
+      volume[0] = '/'; // Since base directory is normalized to forward slashes
+      volume[1] = '\0';
+    }
+  }
   return volume;
 #endif
 }
