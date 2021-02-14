@@ -145,6 +145,9 @@ const CompOpt compopts[] = {
   {"/P", TOO_HARD},                                                 // msvc
   {"/U", AFFECTS_CPP | TAKES_ARG | TAKES_CONCAT_ARG},               // msvc
   {"/u", AFFECTS_CPP},                                              // msvc
+  {"/Yc", TOO_HARD},                                                // msvc
+  {"/Zi", TOO_HARD},                                                // msvc
+  {"/ZI", TOO_HARD},                                                // msvc
 };
 
 static int
