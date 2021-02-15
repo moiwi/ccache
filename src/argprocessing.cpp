@@ -369,6 +369,12 @@ process_arg(Context& ctx,
     return nullopt;
   }
 
+  // MSVC /Fo with no space.
+  if (Util::starts_with(args[i], "/Fo") && config.compiler_type() == CompilerType::cl) {
+    args_info.output_obj = Util::make_relative_path(ctx, string_view(args[i]).substr(3));
+    return nullopt;
+  }
+
   // when using nvcc with separable compilation, -dc implies -c
   if ((args[i] == "-dc" || args[i] == "--device-c")
       && config.compiler_type() == CompilerType::nvcc) {
@@ -433,14 +439,6 @@ process_arg(Context& ctx,
     return nullopt;
   }
 
-  // MSVC /Fo with no space.
-  if (Util::starts_with(args[i], "/Fo")
-      && config.compiler_type() == CompilerType::msvc) {
-    args_info.output_obj =
-      Util::make_relative_path(ctx, string_view(args[i]).substr(3));
-    return nullopt;
-  }
-
   if (Util::starts_with(args[i], "-fdebug-prefix-map=")
       || Util::starts_with(args[i], "-ffile-prefix-map=")) {
     std::string map = args[i].substr(args[i].find('=') + 1);
@@ -485,8 +483,8 @@ process_arg(Context& ctx,
 
   // These options require special handling, because they behave differently
   // with gcc -E, when the output file is not specified.
-  if ((args[i] == "-MD" || args[i] == "-MMD")
-      && config.compiler_type() != CompilerType::msvc) {
+  if ((args[i] == "-MD" || args[i] == "-MMD") &&
+       config.compiler_type() != CompilerType::cl) {
     args_info.generating_dependencies = true;
     args_info.seen_MD_MMD = true;
     state.dep_args.push_back(args[i]);
@@ -799,8 +797,8 @@ process_arg(Context& ctx,
 
   // Same as above but options with concatenated argument beginning with a
   // slash.
-  if (args[i][0] == '-'
-      || (config.compiler_type() == CompilerType::msvc && args[i][0] == '/')) {
+  if (args[i][0] == '-' ||
+     (config.compiler_type() == CompilerType::cl && args[i][0] == '/')) {
     size_t slash_pos = args[i].find('/');
     if (slash_pos != std::string::npos) {
       std::string option = args[i].substr(0, slash_pos);
@@ -838,8 +836,8 @@ process_arg(Context& ctx,
   }
 
   // Other options.
-  if (args[i][0] == '-'
-      || (config.compiler_type() == CompilerType::msvc && args[i][0] == '/')) {
+  if (args[i][0] == '-' ||
+     (config.compiler_type() == CompilerType::cl && args[i][0] == '/')) {
     if (compopt_affects_cpp_output(args[i])
         || compopt_prefix_affects_cpp_output(args[i])) {
       state.cpp_args.push_back(args[i]);
